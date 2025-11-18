@@ -1,5 +1,27 @@
 # Arizona State University HPC Computing Resources
 
+## Documentation Sources
+
+**Primary Documentation:**
+- Supercomputer Hardware Specifications: https://docs.rc.asu.edu/supercomputer-hardware
+- Research Computing Overview: https://asurc.atlassian.net/wiki/spaces/RC/overview
+- Sol Supercomputer Page: https://asurc.atlassian.net/wiki/spaces/RC/pages/1852637228/The+Sol+supercomputer
+- Research Computing Capabilities: https://cores.research.asu.edu/research-computing/capabilities
+- About Research Computing: https://cores.research.asu.edu/research-computing/about
+
+**Academic Publications:**
+- Sol Supercomputer PEARC '23 Paper (ACM): https://dl.acm.org/doi/10.1145/3569951.3597573
+- Sol Supercomputer PEARC '23 Paper (Full HTML): https://dl.acm.org/doi/fullHtml/10.1145/3569951.3597573
+- Sol Supercomputer PEARC '23 Paper (PDF): https://openondemand.org/sites/default/files/documents/PEARC23_ASU-Sol-paper.pdf
+- Research Computing Facilities Statement (PDF): https://cores.research.asu.edu/sites/default/files/2024-05/Research%20Computing%20Facilities%20Statement.pdf
+
+**News Articles:**
+- ASU News - Sol Launch Announcement: https://news.asu.edu/20220526-solutions-new-dawn-supercomputing-asu
+- HPCwire - Sol Launch Coverage: https://www.hpcwire.com/2022/07/13/asu-launching-sol-supercomputer/
+- Data Center Dynamics - Sol Announcement: https://www.datacenterdynamics.com/en/news/asu-to-launch-sol-supercomputer-this-summer/
+
+---
+
 ## Main HPC Systems
 
 | System | Year Deployed | Vendor | Architecture | Total CPU Cores | Total GPUs | Total System Memory |

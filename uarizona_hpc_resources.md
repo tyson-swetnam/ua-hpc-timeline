@@ -1,5 +1,16 @@
 # University of Arizona HPC Computing Resources
 
+## Documentation Sources
+
+**Primary Documentation:**
+- Main HPC Documentation: https://hpcdocs.hpc.arizona.edu/
+- Compute Resources: https://hpcdocs.hpc.arizona.edu/resources/compute_resources/
+- HPC Quick Start Guide: https://uarizona.atlassian.net/wiki/spaces/UAHPC/pages/75989999/HPC+Quick+Start
+- Secure HPC (Soteria): https://uarizona.atlassian.net/wiki/spaces/UAHPC/pages/75989667/Secure+HPC
+- HPC Overview (Confluence): https://public.confluence.arizona.edu/display/UAHPC/HPC+Supercomputer+Overview
+
+---
+
 ## Main HPC Clusters
 
 | Cluster | Model | Year Purchased | Standard CPU Nodes | High Memory Nodes | GPU Nodes | Total Cores | Total System Memory |

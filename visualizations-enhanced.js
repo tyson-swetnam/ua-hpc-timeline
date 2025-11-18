@@ -599,7 +599,7 @@ function createPerformanceGapVisualization() {
     const currentUA = uaAverageData.find(d => d.year === currentYear);
 
     if (currentIndustry && currentUA) {
-        const gapPercent = ((currentIndustry.cores - currentUA.effectiveCores) / currentIndustry.cores * 100).toFixed(0);
+        const gapMultiplier = (currentIndustry.cores / currentUA.effectiveCores).toFixed(1);
 
         g.append('text')
             .attr('x', xScale(currentYear) + 10)
@@ -607,12 +607,24 @@ function createPerformanceGapVisualization() {
             .attr('fill', colors.gap)
             .attr('font-size', '14px')
             .attr('font-weight', 700)
-            .text(`${gapPercent}% Gap`);
+            .text(`${gapMultiplier}× Gap`);
     }
 
-    // Legend
+    // Legend (moved to top left)
     const legend = g.append('g')
-        .attr('transform', `translate(${innerWidth - 180}, 20)`);
+        .attr('transform', `translate(10, 10)`);
+
+    // Add semi-transparent background for legend
+    const legendBg = legend.append('rect')
+        .attr('x', -5)
+        .attr('y', -5)
+        .attr('width', 220)
+        .attr('height', 110)
+        .attr('fill', 'white')
+        .attr('opacity', 0.9)
+        .attr('rx', 5)
+        .attr('stroke', '#e2e8f0')
+        .attr('stroke-width', 1);
 
     const legendItems = [
         { label: 'Typical Dual-Socket Server', color: colors.industry, dash: null, width: 3 },
@@ -917,7 +929,7 @@ function createGPUComparisonVisualization() {
     const currentUA = uaGPUAverage.find(d => d.year === currentYear);
 
     if (currentIndustry && currentUA) {
-        const gapPercent = ((currentIndustry.tflops - currentUA.effectivePerGPU) / currentIndustry.tflops * 100).toFixed(0);
+        const gapMultiplier = (currentIndustry.tflops / currentUA.effectivePerGPU).toFixed(1);
 
         g.append('text')
             .attr('x', xScale(currentYear) + 10)
@@ -925,12 +937,24 @@ function createGPUComparisonVisualization() {
             .attr('fill', colors.gap)
             .attr('font-size', '14px')
             .attr('font-weight', 700)
-            .text(`${gapPercent}% Gap`);
+            .text(`${gapMultiplier}× Gap`);
     }
 
-    // Legend (matching CPU chart style)
+    // Legend (matching CPU chart style, moved to top left)
     const legend = g.append('g')
-        .attr('transform', `translate(${innerWidth - 180}, 20)`);
+        .attr('transform', `translate(10, 10)`);
+
+    // Add semi-transparent background for legend
+    const legendBg = legend.append('rect')
+        .attr('x', -5)
+        .attr('y', -5)
+        .attr('width', 200)
+        .attr('height', 110)
+        .attr('fill', 'white')
+        .attr('opacity', 0.9)
+        .attr('rx', 5)
+        .attr('stroke', '#e2e8f0')
+        .attr('stroke-width', 1);
 
     const legendItems = [
         { label: 'Leading Datacenter GPU', color: colors.industry, dash: null, width: 3 },
@@ -1190,66 +1214,121 @@ function createBubbleVisualization() {
 
 // 5. UA vs ASU vs NAU Comparison Visualization
 function createUAvsASUComparison() {
-    // UA totals (current, 2025)
-    // GPU Cores calculation:
-    // - 95× P100 (16GB): 95 × 3,584 = 340,480 cores
-    // - 68× V100/V100S (32GB): 68 × 5,120 = 348,160 cores (60 Puma + 8 Soteria)
-    // - 12× A100 MIG slices: ~51,200 cores equivalent
-    // Total: ~739,840 GPU cores
+    // UA broken down by system (current, 2025)
+    const uaElGato = {
+        name: 'El Gato',
+        shortName: 'El Gato',
+        cpuCores: 1888,
+        gpus: 0,
+        gpuCores: 0,
+        memory: 23.5,  // TB
+        fplopsFP32: 0,  // PFLOPS (no GPUs)
+        fplopsTensor: 0,  // PFLOPS
+        color: colors.elgato,
+        year: 2013,
+        warrantyEnd: 2018,
+        postWarranty: 7,
+        isUA: true
+    };
+
+    const uaOcelote = {
+        name: 'Ocelote',
+        shortName: 'Ocelote',
+        cpuCores: 11724,
+        gpus: 95,
+        gpuCores: 340480,  // 95 × 3,584 (P100)
+        memory: 83.3,  // TB
+        fplopsFP32: 1.01,  // PFLOPS
+        fplopsTensor: 2.01,  // PFLOPS
+        color: colors.ocelote,
+        year: 2016,
+        warrantyEnd: 2021,
+        postWarranty: 4,
+        isUA: true
+    };
+
+    const uaPuma = {
+        name: 'Puma',
+        shortName: 'Puma',
+        cpuCores: 29512,
+        gpus: 60,
+        gpuCores: 348160,  // 60 × 5,120 (V100S) + MIG slices
+        memory: 169.7,  // TB
+        fplopsFP32: 0.942,  // PFLOPS
+        fplopsTensor: 7.5,  // PFLOPS
+        color: colors.puma,
+        year: 2020,
+        warrantyEnd: 2025,
+        postWarranty: 0,
+        isUA: true
+    };
+
+    const uaSoteria = {
+        name: 'Soteria',
+        shortName: 'Soteria',
+        cpuCores: 564,
+        gpus: 8,
+        gpuCores: 40960,  // 8 × 5,120 (V100)
+        memory: 3,  // TB
+        fplopsFP32: 0.126,  // PFLOPS
+        fplopsTensor: 1.0,  // PFLOPS
+        color: colors.soteria,
+        year: 2023,
+        warrantyEnd: 2028,
+        postWarranty: 0,
+        isUA: true
+    };
+
+    // UA totals (for reference/fallback)
     const uaData = {
         name: 'University of Arizona',
         shortName: 'UA',
         cpuCores: 43688,
         gpus: 163,
-        gpuCores: 739840,
-        memory: 256,  // TB
-        fplopsFP32: 2.08,  // PFLOPS
-        fplopsTensor: 10.5,  // PFLOPS
+        gpuCores: 729600,
+        memory: 279.5,  // TB (23.5 + 83.3 + 169.7 + 3)
+        storage: null,  // PB - not publicly documented
+        fplopsFP32: 2.078,  // PFLOPS
+        fplopsTensor: 10.51,  // PFLOPS
         color: '#0c5aa6',
-        systems: [
-            { name: 'Puma', cores: 29512, gpus: 60, year: 2020 },
-            { name: 'Ocelote', cores: 11724, gpus: 95, year: 2016 },
-            { name: 'El Gato', cores: 1888, gpus: 0, year: 2013 },
-            { name: 'Soteria', cores: 564, gpus: 8, year: 2023 }
-        ]
+        systems: [uaPuma, uaOcelote, uaElGato, uaSoteria],
+        isUA: true
     };
 
-    // CyVerse UA totals (June 2023)
-    // GPU inventory: 12x GTX 1080 Ti, 8x RTX 2080, 5x Tesla T4, 4x A100 80GB, 22x A16, 4x L40s = 55 total GPUs
+    // CyVerse UA totals (June 2023 - Updated)
+    // Clusters: Vice/K8s (44 nodes, 3676 cores, 14TB RAM), Tombstone (25 nodes, 504 cores, 6.25TB RAM), iRODS (38 nodes, 680 cores, 10TB RAM)
+    // GPU inventory: 12x GTX 1080 Ti, 8x RTX 2080, 5x Tesla T4, 4x A100 80GB, 26x A16, 4x L40s = 59 total GPUs
     // GPU Performance calculations:
     // - GTX 1080 Ti: 12 × 11.3 TFLOPS FP32 = 135.6 TFLOPS
     // - RTX 2080: 8 × 10.1 TFLOPS FP32 = 80.8 TFLOPS
     // - Tesla T4: 5 × 8.1 TFLOPS FP32 = 40.5 TFLOPS
     // - A100 80GB PCIe: 4 × 19.5 TFLOPS FP32 = 78 TFLOPS, 4 × 312 TFLOPS Tensor = 1248 TFLOPS
-    // - A16: 22 × 8.0 TFLOPS FP32 = 176 TFLOPS, 22 × 32 TFLOPS Tensor = 704 TFLOPS
+    // - A16: 26 × 8.0 TFLOPS FP32 = 208 TFLOPS, 26 × 32 TFLOPS Tensor = 832 TFLOPS
     // - L40s: 4 × 91.6 TFLOPS FP32 = 366.4 TFLOPS, 4 × 362 TFLOPS Tensor = 1448 TFLOPS
-    // Total FP32: ~877.3 TFLOPS = 0.877 PFLOPS
-    // Total Tensor: ~3400 TFLOPS = 3.4 PFLOPS
+    // Total FP32: ~909.3 TFLOPS = 0.909 PFLOPS
+    // Total Tensor: ~3528 TFLOPS = 3.528 PFLOPS
     // GPU Cores calculation:
     // - 12× GTX 1080 Ti: 12 × 3,584 = 43,008 cores
     // - 8× RTX 2080: 8 × 2,944 = 23,552 cores
     // - 5× Tesla T4: 5 × 2,560 = 12,800 cores
     // - 4× A100 80GB: 4 × 6,912 = 27,648 cores
-    // - 22× A16: 22 × 2,560 = 56,320 cores
+    // - 26× A16: 26 × 2,560 = 66,560 cores
     // - 4× L40s: 4 × 18,176 = 72,704 cores
-    // Total: 236,032 GPU cores
+    // Total: 246,272 GPU cores
     const cyverseData = {
         name: 'CyVerse (UA)',
         shortName: 'CyVerse',
-        cpuCores: 3760,  // 1052 + 612 + 688 + 504 + 224 + 680
-        gpus: 55,  // Total GPU count across all servers
-        gpuCores: 236032,
-        memory: 42.43,  // 7.68 + 5.2 + 10.5 + 6.25 + 2.8 + 10 = 42.43 TB
-        storage: 8.99,  // 8.18 PB + storage from other systems (~0.8 PB) = ~9 PB
-        fplopsFP32: 0.877,  // PFLOPS
-        fplopsTensor: 3.4,  // PFLOPS
+        cpuCores: 4860,  // 3676 + 504 + 680
+        gpus: 59,  // Total GPU count: 12 + 8 + 5 + 4 + 26 + 4
+        gpuCores: 246272,
+        memory: 30.25,  // 14 + 6.25 + 10 = 30.25 TB
+        storage: 10.7,  // PB: 8.18 PB iRODS + 2.1 PB OSN + 0.6 PB other
+        fplopsFP32: 0.909,  // PFLOPS
+        fplopsTensor: 3.528,  // PFLOPS
         color: '#00B4D8',  // CyVerse blue
         systems: [
-            { name: 'Vice/K8s', cores: 1052, gpus: 21 },
-            { name: 'Condor', cores: 612, gpus: 0 },
-            { name: 'Marana Cloud', cores: 688, gpus: 0 },
+            { name: 'Vice/K8s', cores: 3676, gpus: 21 },
             { name: 'Tombstone', cores: 504, gpus: 0 },
-            { name: 'Xen Pools', cores: 224, gpus: 0 },
             { name: 'iRODS', cores: 680, gpus: 0 }
         ]
     };
@@ -1263,6 +1342,7 @@ function createUAvsASUComparison() {
     // - 2× MI200: 2 × 7,680 = 15,360 cores
     // - 360× V100: 360 × 5,120 = 1,843,200 cores
     // Total: ~3,646,464 GPU cores
+    // Storage: 4 PB BeeGFS + 2 PB PowerScale + 10 PB Network + 2 PB Home = 18 PB
     const asuData = {
         name: 'Arizona State University',
         shortName: 'ASU',
@@ -1270,6 +1350,7 @@ function createUAvsASUComparison() {
         gpus: 632,
         gpuCores: 3646464,
         memory: 203,  // TB
+        storage: 18,  // PB: 4 PB BeeGFS + 2 PB PowerScale + 10 PB Network + 2 PB Home
         fplopsFP32: 12,  // PFLOPS
         fplopsTensor: 150,  // PFLOPS
         color: '#8C1D40',  // ASU Maroon
@@ -1287,6 +1368,7 @@ function createUAvsASUComparison() {
     // - 12× K80: 12 × 2,496 = 29,952 cores
     // - 4× P100-PCIE 16GB: 4 × 3,584 = 14,336 cores
     // Total: 92,416 GPU cores
+    // Storage: 2.3 PB (Lustre scratch + ZFS project)
     const nauData = {
         name: 'Northern Arizona University',
         shortName: 'NAU',
@@ -1294,6 +1376,7 @@ function createUAvsASUComparison() {
         gpus: 24,
         gpuCores: 92416,
         memory: 14,  // TB (approximate)
+        storage: 2.3,  // PB: Lustre scratch + ZFS project
         fplopsFP32: 0.288,  // PFLOPS
         fplopsTensor: 1.75,  // PFLOPS
         color: '#1B4F93',  // NAU Blue
@@ -1307,8 +1390,8 @@ function createUAvsASUComparison() {
     container.selectAll('*').remove();
 
     const width = container.node().getBoundingClientRect().width;
-    const height = 1100;
-    const margin = { top: 40, right: 40, bottom: 140, left: 140 };
+    const height = 1150;  // Adjusted for 3 rows instead of 4
+    const margin = { top: 40, right: 40, bottom: 180, left: 140 };
     const innerWidth = width - margin.left - margin.right;
     const innerHeight = height - margin.top - margin.bottom;
 
@@ -1326,6 +1409,7 @@ function createUAvsASUComparison() {
         { key: 'gpus', label: 'Total GPUs', format: d => formatNumber(d), scale: 'linear' },
         { key: 'gpuCores', label: 'GPU Cores', format: d => formatNumber(d), scale: 'linear' },
         { key: 'memory', label: 'System Memory (TB)', format: d => d + ' TB', scale: 'linear' },
+        { key: 'storage', label: 'Total Storage (PB)', format: d => d ? d.toFixed(1) + ' PB' : 'N/A', scale: 'linear' },
         { key: 'fplopsFP32', label: 'GPU FP32 (PFLOPS)', format: d => d.toFixed(1) + ' PF', scale: 'linear' },
         { key: 'fplopsTensor', label: 'AI/Tensor (PFLOPS)', format: d => d.toFixed(1) + ' PF', scale: 'linear' }
     ];
@@ -1333,16 +1417,27 @@ function createUAvsASUComparison() {
     const barHeight = 30;
     const barSpacing = 4;
     const groupSpacing = 25;
-    const universities = [uaData, cyverseData, asuData, nauData];
+    const universities = [asuData, nauData];
+    const uaSystems = [uaPuma, uaOcelote, uaElGato, uaSoteria, cyverseData];
+
+    // Calculate combined UA totals (HPC + CyVerse)
+    const uaCombinedData = {
+        cpuCores: uaData.cpuCores + cyverseData.cpuCores,
+        gpus: uaData.gpus + cyverseData.gpus,
+        gpuCores: uaData.gpuCores + cyverseData.gpuCores,
+        memory: uaData.memory + cyverseData.memory,
+        storage: (uaData.storage || 0) + (cyverseData.storage || 0),
+        fplopsFP32: uaData.fplopsFP32 + cyverseData.fplopsFP32,
+        fplopsTensor: uaData.fplopsTensor + cyverseData.fplopsTensor
+    };
 
     // Y positions for each metric
     metrics.forEach((metric, i) => {
-        const yPos = i * (barHeight * 4 + barSpacing * 3 + groupSpacing);
+        const yPos = i * (barHeight * 3 + barSpacing * 2 + groupSpacing);
 
         // Get max value for this metric to scale bars
         const maxValue = Math.max(
-            uaData[metric.key] || 0,
-            cyverseData[metric.key] || 0,
+            uaCombinedData[metric.key] || 0,
             asuData[metric.key] || 0,
             nauData[metric.key] || 0
         );
@@ -1353,16 +1448,105 @@ function createUAvsASUComparison() {
         // Metric label
         g.append('text')
             .attr('x', -10)
-            .attr('y', yPos + barHeight * 1.5)
+            .attr('y', yPos + barHeight * 1)
             .attr('text-anchor', 'end')
             .attr('fill', colors.text)
             .attr('font-size', '13px')
             .attr('font-weight', 600)
             .text(metric.label);
 
-        // Draw bars for each university
+        // Draw UA stacked bar (first bar) - systems stacked horizontally including CyVerse
+        const uaBarY = yPos;
+        const uaBarGroup = g.append('g');
+
+        let xOffset = 0;
+        uaSystems.forEach((system, sysIndex) => {
+            const value = system[metric.key] || 0;
+            const barWidth = xScale(value);
+
+            if (value > 0) {
+                const isPostWarranty = system.postWarranty > 0;
+                const isCyVerse = system.shortName === 'CyVerse';
+
+                // Individual system segment
+                const segment = uaBarGroup.append('rect')
+                    .attr('x', xOffset)
+                    .attr('y', uaBarY)
+                    .attr('width', barWidth)
+                    .attr('height', barHeight)
+                    .attr('fill', system.color)
+                    .attr('opacity', isPostWarranty ? 0.6 : 0.8)
+                    .attr('stroke', isPostWarranty ? colors.aging : '#ffffff')
+                    .attr('stroke-width', isPostWarranty ? 2 : 1)
+                    .attr('stroke-dasharray', isPostWarranty ? '4,2' : 'none')
+                    .on('mouseover', function(event) {
+                        d3.select(this).attr('opacity', 1);
+                        const displayValue = value > 0 ? metric.format(value) : 'N/A';
+                        const percentage = ((value / (uaCombinedData[metric.key] || 1)) * 100).toFixed(1);
+                        let tooltipContent = `
+                            <strong>${system.shortName} (UA) ${metric.label}</strong><br/>
+                            ${displayValue} (${percentage}% of UA total)<br/>
+                            <hr style="margin: 5px 0; border-color: rgba(255,255,255,0.2)">
+                        `;
+                        if (isCyVerse) {
+                            tooltipContent += `Type: Cloud/Data Infrastructure`;
+                        } else {
+                            const warrantyStat = isPostWarranty
+                                ? `${system.postWarranty}y post-warranty`
+                                : 'In warranty';
+                            tooltipContent += `Year: ${system.year}<br/>Status: ${warrantyStat}`;
+                        }
+                        showTooltip(event, tooltipContent);
+                    })
+                    .on('mouseout', function() {
+                        d3.select(this).attr('opacity', isPostWarranty ? 0.6 : 0.8);
+                        hideTooltip();
+                    });
+
+                // Add system label if segment is wide enough
+                if (barWidth > 40) {
+                    uaBarGroup.append('text')
+                        .attr('x', xOffset + barWidth / 2)
+                        .attr('y', uaBarY + barHeight / 2)
+                        .attr('dy', '0.35em')
+                        .attr('text-anchor', 'middle')
+                        .attr('fill', '#ffffff')
+                        .attr('font-size', '9px')
+                        .attr('font-weight', 700)
+                        .text(system.shortName);
+                }
+
+                xOffset += barWidth;
+            }
+        });
+
+        // UA total label at the end
+        const uaTotal = uaCombinedData[metric.key] || 0;
+        if (uaTotal > 0) {
+            uaBarGroup.append('text')
+                .attr('x', xOffset + 8)
+                .attr('y', uaBarY + barHeight / 2)
+                .attr('dy', '0.35em')
+                .attr('fill', colors.text)
+                .attr('font-size', '11px')
+                .attr('font-weight', 600)
+                .text(metric.format(uaTotal));
+        }
+
+        // UA label on the left
+        uaBarGroup.append('text')
+            .attr('x', 5)
+            .attr('y', uaBarY + barHeight / 2)
+            .attr('dy', '0.35em')
+            .attr('fill', '#ffffff')
+            .attr('font-size', '10px')
+            .attr('font-weight', 700)
+            .attr('text-shadow', '0 0 3px rgba(0,0,0,0.5)')
+            .text('UA');
+
+        // Draw bars for other universities
         universities.forEach((university, uniIndex) => {
-            const barY = yPos + (barHeight + barSpacing) * uniIndex;
+            const barY = yPos + (barHeight + barSpacing) * (uniIndex + 1);
             const barGroup = g.append('g');
 
             const value = university[metric.key] || 0;
@@ -1414,20 +1598,69 @@ function createUAvsASUComparison() {
     });
 
     // Legend
-    const legendY = metrics.length * (barHeight * 4 + barSpacing * 3 + groupSpacing) + 15;
+    const legendY = metrics.length * (barHeight * 3 + barSpacing * 2 + groupSpacing) + 15;
     const legend = g.append('g')
         .attr('transform', `translate(0, ${legendY})`);
 
+    // Add title for legend
+    legend.append('text')
+        .attr('x', 0)
+        .attr('y', -10)
+        .attr('fill', colors.text)
+        .attr('font-size', '12px')
+        .attr('font-weight', 700)
+        .text('UA Resources (stacked in first bar):');
+
     const legendItems = [
-        { label: 'University of Arizona HPC (UA)', color: uaData.color },
-        { label: 'CyVerse (UA)', color: cyverseData.color },
-        { label: 'Arizona State University (ASU)', color: asuData.color },
-        { label: 'Northern Arizona University (NAU)', color: nauData.color }
+        { label: 'Puma (2020, in warranty)', color: colors.puma, postWarranty: false },
+        { label: 'Ocelote (2016, 4y post-warranty)', color: colors.ocelote, postWarranty: true },
+        { label: 'El Gato (2013, 7y post-warranty)', color: colors.elgato, postWarranty: true },
+        { label: 'Soteria (2023, in warranty)', color: colors.soteria, postWarranty: false },
+        { label: 'CyVerse (Cloud/Data)', color: cyverseData.color, postWarranty: false }
     ];
 
     legendItems.forEach((item, i) => {
         const legendItem = legend.append('g')
-            .attr('transform', `translate(${i * 220}, ${Math.floor(i / 2) * 20})`);
+            .attr('transform', `translate(${(i % 3) * 260}, ${Math.floor(i / 3) * 20 + 10})`);
+
+        legendItem.append('rect')
+            .attr('width', 25)
+            .attr('height', 12)
+            .attr('fill', item.color)
+            .attr('opacity', item.postWarranty ? 0.6 : 0.8)
+            .attr('stroke', item.postWarranty ? colors.aging : '#ffffff')
+            .attr('stroke-width', item.postWarranty ? 2 : 1)
+            .attr('stroke-dasharray', item.postWarranty ? '4,2' : 'none')
+            .attr('rx', 3);
+
+        legendItem.append('text')
+            .attr('x', 30)
+            .attr('y', 6)
+            .attr('dy', '0.35em')
+            .attr('fill', colors.text)
+            .attr('font-size', '10px')
+            .attr('font-weight', 600)
+            .text(item.label);
+    });
+
+    // Other universities legend
+    const otherLegendY = 65;
+    legend.append('text')
+        .attr('x', 0)
+        .attr('y', otherLegendY - 10)
+        .attr('fill', colors.text)
+        .attr('font-size', '12px')
+        .attr('font-weight', 700)
+        .text('Other Arizona Universities:');
+
+    const otherItems = [
+        { label: 'Arizona State University (ASU)', color: asuData.color },
+        { label: 'Northern Arizona University (NAU)', color: nauData.color }
+    ];
+
+    otherItems.forEach((item, i) => {
+        const legendItem = legend.append('g')
+            .attr('transform', `translate(${i * 300}, ${otherLegendY})`);
 
         legendItem.append('rect')
             .attr('width', 25)
@@ -1447,21 +1680,569 @@ function createUAvsASUComparison() {
     });
 
     // Add summary statistics below the legend
-    const summaryY = legendY + 55;
+    const summaryY = legendY + 110;
     const summary = g.append('g')
         .attr('transform', `translate(0, ${summaryY})`);
 
-    const totalCores = uaData.cpuCores + cyverseData.cpuCores + asuData.cpuCores + nauData.cpuCores;
-    const totalGPUs = uaData.gpus + cyverseData.gpus + asuData.gpus + nauData.gpus;
-    const totalTensor = (uaData.fplopsTensor || 0) + (asuData.fplopsTensor || 0) + (nauData.fplopsTensor || 0);
+    const totalCores = uaCombinedData.cpuCores + asuData.cpuCores + nauData.cpuCores;
+    const totalGPUs = uaCombinedData.gpus + asuData.gpus + nauData.gpus;
+    const totalTensor = (uaCombinedData.fplopsTensor || 0) + (asuData.fplopsTensor || 0) + (nauData.fplopsTensor || 0);
+
+    // UA breakdown statistics
+    const uaPostWarrantyCores = uaElGato.cpuCores + uaOcelote.cpuCores;
+    const uaPostWarrantyGPUs = uaElGato.gpus + uaOcelote.gpus;
+    const uaPostWarrantyPct = ((uaPostWarrantyCores / uaCombinedData.cpuCores) * 100).toFixed(1);
+    const uaPostWarrantyGPUPct = ((uaPostWarrantyGPUs / uaCombinedData.gpus) * 100).toFixed(1);
 
     summary.append('text')
         .attr('x', 0)
         .attr('y', 0)
         .attr('fill', colors.text)
+        .attr('font-size', '11px')
+        .attr('font-weight', 700)
+        .text(`UA Total Resources (HPC + CyVerse): ${formatNumber(uaCombinedData.cpuCores)} CPU cores, ${uaCombinedData.gpus} GPUs, ${(uaCombinedData.storage || 0).toFixed(1)} PB storage`);
+
+    summary.append('text')
+        .attr('x', 0)
+        .attr('y', 20)
+        .attr('fill', colors.aging)
+        .attr('font-size', '10px')
+        .attr('font-weight', 600)
+        .text(`⚠ Post-Warranty HPC Systems: ${formatNumber(uaPostWarrantyCores)} CPU cores (${uaPostWarrantyPct}% of UA total) and ${uaPostWarrantyGPUs} GPUs (${uaPostWarrantyGPUPct}% of UA total) on El Gato & Ocelote`);
+
+    summary.append('text')
+        .attr('x', 0)
+        .attr('y', 42)
+        .attr('fill', colors.text)
         .attr('font-size', '10px')
         .attr('opacity', 0.7)
         .text(`Combined Arizona Universities Total: ${formatNumber(totalCores)} CPU cores, ${totalGPUs} GPUs, ${totalTensor.toFixed(1)} PFLOPS AI/Tensor performance`);
+}
+
+// 6. Peer Universities Comparison (UA vs CU Boulder vs Utah vs Texas A&M)
+function createPeerUniversitiesComparison() {
+    // UA HPC data
+    const uaHPCData = {
+        cpuCores: 43688,
+        gpus: 163,
+        memory: 279.5,
+        fplopsFP32: 2.078,
+        fplopsTensor: 10.51
+    };
+
+    // CyVerse data
+    const cyverseData = {
+        cpuCores: 4860,
+        gpus: 59,
+        memory: 30.25,
+        storage: 10.7,
+        fplopsFP32: 0.909,
+        fplopsTensor: 3.528
+    };
+
+    // Combined UA (HPC + CyVerse)
+    const uaData = {
+        name: 'University of Arizona',
+        shortName: 'UA',
+        cpuCores: uaHPCData.cpuCores + cyverseData.cpuCores,  // 48,548
+        gpus: uaHPCData.gpus + cyverseData.gpus,  // 222
+        memory: uaHPCData.memory + cyverseData.memory,  // 309.75
+        storage: cyverseData.storage || 10.7,  // 10.7 PB
+        fplopsFP32: uaHPCData.fplopsFP32 + cyverseData.fplopsFP32,  // 2.987
+        fplopsTensor: uaHPCData.fplopsTensor + cyverseData.fplopsTensor,  // 14.038
+        primarySystem: 'Puma (2020) + CyVerse',
+        color: '#0c5aa6'
+    };
+
+    const cuBoulderData = {
+        name: 'University of Colorado Boulder',
+        shortName: 'CU Boulder',
+        cpuCores: 28080,
+        gpus: 222,
+        memory: 168,  // Recalculated: ~455 nodes with 256-2048 GB RAM
+        storage: null,  // PB - PetaLibrary mentioned but capacity not documented
+        fplopsFP32: 5.2,
+        fplopsTensor: 58.7,
+        primarySystem: 'Alpine (2021)',
+        color: '#CFB87C'
+    };
+
+    const utahData = {
+        name: 'University of Utah',
+        shortName: 'Utah',
+        cpuCores: 45000,
+        gpus: 280,
+        memory: 166,  // Recalculated: ~450 nodes with 128-2048 GB RAM
+        storage: 28,  // PB: 28+ PB RAID
+        fplopsFP32: 4.7,
+        fplopsTensor: 32.5,
+        primarySystem: 'Notchpeak (Multiple)',
+        color: '#CC0000'
+    };
+
+    const texasAMData = {
+        name: 'Texas A&M University',
+        shortName: 'Texas A&M',
+        cpuCores: 55000,
+        gpus: 396,
+        memory: 420,  // Recalculated: Grace alone ~382 TB + other clusters
+        storage: 24.7,  // PB: Grace 8.3 PB + other systems
+        fplopsFP32: 6.7,
+        fplopsTensor: 73.8,
+        primarySystem: 'Grace (2021)',
+        color: '#500000'
+    };
+
+    const container = d3.select('#peer-comparison-viz');
+    container.selectAll('*').remove();
+
+    const width = container.node().getBoundingClientRect().width;
+    const height = 1100;  // Increased for storage metric
+    const margin = { top: 40, right: 40, bottom: 120, left: 140 };
+    const innerWidth = width - margin.left - margin.right;
+    const innerHeight = height - margin.top - margin.bottom;
+
+    const svg = container
+        .append('svg')
+        .attr('width', width)
+        .attr('height', height);
+
+    const g = svg.append('g')
+        .attr('transform', `translate(${margin.left},${margin.top})`);
+
+    // Metrics to compare
+    const metrics = [
+        { key: 'cpuCores', label: 'CPU Cores', format: d => formatNumber(d) },
+        { key: 'gpus', label: 'Total GPUs', format: d => formatNumber(d) },
+        { key: 'memory', label: 'System Memory (TB)', format: d => d + ' TB' },
+        { key: 'storage', label: 'Total Storage (PB)', format: d => d ? d.toFixed(1) + ' PB' : 'N/A' },
+        { key: 'fplopsFP32', label: 'GPU FP32 (PFLOPS)', format: d => d.toFixed(1) + ' PF' },
+        { key: 'fplopsTensor', label: 'AI/Tensor (PFLOPS)', format: d => d.toFixed(1) + ' PF' }
+    ];
+
+    const barHeight = 30;
+    const barSpacing = 4;
+    const groupSpacing = 25;
+    const universities = [uaData, cuBoulderData, utahData, texasAMData];
+
+    // Y positions for each metric
+    metrics.forEach((metric, i) => {
+        const yPos = i * (barHeight * 4 + barSpacing * 3 + groupSpacing);
+
+        // Get max value for this metric to scale bars
+        const maxValue = Math.max(
+            uaData[metric.key] || 0,
+            cuBoulderData[metric.key] || 0,
+            utahData[metric.key] || 0,
+            texasAMData[metric.key] || 0
+        );
+        const xScale = d3.scaleLinear()
+            .domain([0, maxValue * 1.1])
+            .range([0, innerWidth - 200]);
+
+        // Metric label
+        g.append('text')
+            .attr('x', -10)
+            .attr('y', yPos + barHeight * 1.5)
+            .attr('text-anchor', 'end')
+            .attr('fill', colors.text)
+            .attr('font-size', '13px')
+            .attr('font-weight', 600)
+            .text(metric.label);
+
+        // Draw bars for each university
+        universities.forEach((university, uniIndex) => {
+            const barY = yPos + (barHeight + barSpacing) * uniIndex;
+            const barGroup = g.append('g');
+
+            const value = university[metric.key] || 0;
+            const isUA = university.shortName === 'UA';
+
+            // Bar
+            barGroup.append('rect')
+                .attr('x', 0)
+                .attr('y', barY)
+                .attr('width', xScale(value))
+                .attr('height', barHeight)
+                .attr('fill', university.color)
+                .attr('opacity', 0.8)
+                .attr('rx', 4)
+                .attr('stroke', isUA ? colors.gap : 'none')
+                .attr('stroke-width', isUA ? 2 : 0)
+                .on('mouseover', function(event) {
+                    d3.select(this).attr('opacity', 1);
+                    const displayValue = value > 0 ? metric.format(value) : 'N/A';
+                    showTooltip(event, `
+                        <strong>${university.shortName} ${metric.label}</strong><br/>
+                        ${displayValue}<br/>
+                        Primary System: ${university.primarySystem}
+                    `);
+                })
+                .on('mouseout', function() {
+                    d3.select(this).attr('opacity', 0.8);
+                    hideTooltip();
+                });
+
+            // Value label
+            if (value > 0) {
+                barGroup.append('text')
+                    .attr('x', xScale(value) + 8)
+                    .attr('y', barY + barHeight / 2)
+                    .attr('dy', '0.35em')
+                    .attr('fill', colors.text)
+                    .attr('font-size', '11px')
+                    .attr('font-weight', 600)
+                    .text(metric.format(value));
+            }
+
+            // University label on the left side of bar
+            barGroup.append('text')
+                .attr('x', 5)
+                .attr('y', barY + barHeight / 2)
+                .attr('dy', '0.35em')
+                .attr('fill', '#ffffff')
+                .attr('font-size', '10px')
+                .attr('font-weight', 700)
+                .text(university.shortName);
+        });
+    });
+
+    // Legend
+    const legendY = metrics.length * (barHeight * 4 + barSpacing * 3 + groupSpacing) + 15;
+    const legend = g.append('g')
+        .attr('transform', `translate(0, ${legendY})`);
+
+    const legendItems = [
+        { label: 'University of Arizona', color: uaData.color, isUA: true },
+        { label: 'CU Boulder', color: cuBoulderData.color, isUA: false },
+        { label: 'University of Utah', color: utahData.color, isUA: false },
+        { label: 'Texas A&M University', color: texasAMData.color, isUA: false }
+    ];
+
+    legendItems.forEach((item, i) => {
+        const legendItem = legend.append('g')
+            .attr('transform', `translate(${i * 200}, ${Math.floor(i / 2) * 20})`);
+
+        legendItem.append('rect')
+            .attr('width', 25)
+            .attr('height', 12)
+            .attr('fill', item.color)
+            .attr('opacity', 0.8)
+            .attr('stroke', item.isUA ? colors.gap : 'none')
+            .attr('stroke-width', item.isUA ? 2 : 0)
+            .attr('rx', 3);
+
+        legendItem.append('text')
+            .attr('x', 30)
+            .attr('y', 6)
+            .attr('dy', '0.35em')
+            .attr('fill', colors.text)
+            .attr('font-size', '10px')
+            .attr('font-weight', item.isUA ? 700 : 600)
+            .text(item.label);
+    });
+
+    // Add comparative analysis
+    const analysisY = legendY + 50;
+    const analysis = g.append('g')
+        .attr('transform', `translate(0, ${analysisY})`);
+
+    const peerAvgCores = (cuBoulderData.cpuCores + utahData.cpuCores + texasAMData.cpuCores) / 3;
+    const peerAvgGPUs = (cuBoulderData.gpus + utahData.gpus + texasAMData.gpus) / 3;
+    const peerAvgTensor = (cuBoulderData.fplopsTensor + utahData.fplopsTensor + texasAMData.fplopsTensor) / 3;
+
+    const coreDiff = ((uaData.cpuCores / peerAvgCores - 1) * 100).toFixed(0);
+    const gpuDiff = ((uaData.gpus / peerAvgGPUs - 1) * 100).toFixed(0);
+    const tensorDiff = ((uaData.fplopsTensor / peerAvgTensor - 1) * 100).toFixed(0);
+
+    analysis.append('text')
+        .attr('x', 0)
+        .attr('y', 0)
+        .attr('fill', colors.text)
+        .attr('font-size', '11px')
+        .attr('font-weight', 600)
+        .text(`UA vs. Peer Average: CPU Cores ${coreDiff > 0 ? '+' : ''}${coreDiff}%, GPUs ${gpuDiff}%, AI Performance ${tensorDiff}%`);
+
+    analysis.append('text')
+        .attr('x', 0)
+        .attr('y', 20)
+        .attr('fill', colors.text)
+        .attr('font-size', '10px')
+        .attr('opacity', 0.7)
+        .text(`Peer institutions: CU Boulder (Alpine 2021), University of Utah (Notchpeak+), Texas A&M (Grace 2021)`);
+}
+
+// 7. UA vs ACCESS-CI (Jetstream2 & TACC) GPU/AI Resources Comparison
+function createACCESSCIComparison() {
+    // UA Total GPU resources (HPC + CyVerse)
+    const uaData = {
+        name: 'University of Arizona',
+        shortName: 'UA Total',
+        gpus: 222,  // 163 HPC + 59 CyVerse
+        gpuTypes: 'P100, V100, V100S, A100 MIG, GTX 1080 Ti, RTX 2080, T4, A100, A16, L40s',
+        fplopsFP32: 2.987,  // 2.078 HPC + 0.909 CyVerse
+        fplopsTensor: 14.038,  // 10.51 HPC + 3.528 CyVerse
+        h100Count: 0,
+        h200Count: 0,
+        a100Count: 16,  // 12 MIG slices + 4 CyVerse A100 80GB
+        color: '#0c5aa6',
+        type: 'Local HPC',
+        accessType: 'UA NetID',
+        allocation: 'Monthly CPU-hour allocations'
+    };
+
+    // Jetstream2 GPU resources
+    const jetstream2Data = {
+        name: 'Jetstream2 (NSF Cloud)',
+        shortName: 'Jetstream2',
+        gpus: 488,  // 360 A100 + 96 H100 + 32 L40S
+        gpuTypes: 'A100 40GB SXM4, H100 80GB SXM5, L40S 48GB',
+        fplopsFP32: 4.509,  // (360×19.5 + 96×67 + 32×91.6)/1000
+        fplopsTensor: 302.3,  // (360×312 + 96×1979 + 32×180)/1000 ≈ 302.3 PFLOPS
+        h100Count: 96,
+        h200Count: 0,
+        a100Count: 360,
+        color: '#FF8C00',
+        type: 'Cloud (OpenStack)',
+        accessType: 'ACCESS allocation',
+        allocation: 'Explore: 400K SU, Discover: 1.5M SU, Accelerate: 3M SU'
+    };
+
+    // TACC combined GPU resources (Frontera + Stampede3 + Lonestar6 + Vista)
+    const taccData = {
+        name: 'TACC Systems Combined',
+        shortName: 'TACC',
+        gpus: 1884,  // 360 RTX5000 + 96 H100 + 80 PVC + 260 A100/H100 + 600 H200
+        gpuTypes: 'H200 96GB (Vista), H100 96GB, A100 40GB, Intel PVC 124GB, RTX 5000',
+        fplopsFP32: 23.3,  // Simplified calculation
+        fplopsTensor: 1219.5,  // (600×1979 + 96×1979 + 252×312 + 8×1513)/1000 ≈ 1219.5 PFLOPS
+        h100Count: 104,  // 96 Stampede3 + 8 Lonestar6
+        h200Count: 600,  // Vista
+        a100Count: 252,  // Lonestar6
+        color: '#BF5700',  // Texas orange
+        type: 'Traditional HPC',
+        accessType: 'ACCESS allocation',
+        allocation: 'Explore to Maximize (up to millions of SU)'
+    };
+
+    const container = d3.select('#access-ci-comparison-viz');
+    container.selectAll('*').remove();
+
+    const width = container.node().getBoundingClientRect().width;
+    const height = 900;
+    const margin = { top: 40, right: 40, bottom: 200, left: 180 };
+    const innerWidth = width - margin.left - margin.right;
+    const innerHeight = height - margin.top - margin.bottom;
+
+    const svg = container
+        .append('svg')
+        .attr('width', width)
+        .attr('height', height);
+
+    const g = svg.append('g')
+        .attr('transform', `translate(${margin.left},${margin.top})`);
+
+    // Metrics to compare (focused on GPU/AI)
+    const metrics = [
+        { key: 'gpus', label: 'Total GPUs', format: d => formatNumber(d), scale: 'linear' },
+        { key: 'h100Count', label: 'H100 GPUs (Latest Gen)', format: d => formatNumber(d), scale: 'linear' },
+        { key: 'h200Count', label: 'H200 GPUs (Newest)', format: d => formatNumber(d), scale: 'linear' },
+        { key: 'a100Count', label: 'A100 GPUs', format: d => formatNumber(d), scale: 'linear' },
+        { key: 'fplopsFP32', label: 'GPU FP32 (PFLOPS)', format: d => d.toFixed(1) + ' PF', scale: 'linear' },
+        { key: 'fplopsTensor', label: 'AI/Tensor (PFLOPS)', format: d => d.toFixed(1) + ' PF', scale: 'linear' }
+    ];
+
+    const barHeight = 35;
+    const barSpacing = 5;
+    const groupSpacing = 30;
+    const systems = [uaData, jetstream2Data, taccData];
+
+    // Y positions for each metric
+    metrics.forEach((metric, i) => {
+        const yPos = i * (barHeight * 3 + barSpacing * 2 + groupSpacing);
+
+        // Get max value for this metric to scale bars
+        const maxValue = Math.max(
+            uaData[metric.key] || 0,
+            jetstream2Data[metric.key] || 0,
+            taccData[metric.key] || 0
+        );
+        const xScale = d3.scaleLinear()
+            .domain([0, maxValue * 1.1])
+            .range([0, innerWidth - 250]);
+
+        // Metric label
+        g.append('text')
+            .attr('x', -10)
+            .attr('y', yPos + barHeight * 1.5)
+            .attr('text-anchor', 'end')
+            .attr('fill', colors.text)
+            .attr('font-size', '14px')
+            .attr('font-weight', 700)
+            .text(metric.label);
+
+        // Draw bars for each system
+        systems.forEach((system, sysIndex) => {
+            const barY = yPos + (barHeight + barSpacing) * sysIndex;
+            const barGroup = g.append('g');
+
+            const value = system[metric.key] || 0;
+            const isUA = system.shortName === 'UA Total';
+
+            // Bar
+            barGroup.append('rect')
+                .attr('x', 0)
+                .attr('y', barY)
+                .attr('width', xScale(value))
+                .attr('height', barHeight)
+                .attr('fill', system.color)
+                .attr('opacity', 0.85)
+                .attr('rx', 5)
+                .attr('stroke', isUA ? colors.gap : '#ffffff')
+                .attr('stroke-width', isUA ? 3 : 1)
+                .on('mouseover', function(event) {
+                    d3.select(this).attr('opacity', 1);
+                    const displayValue = value > 0 ? metric.format(value) : 'N/A';
+                    showTooltip(event, `
+                        <strong>${system.name}</strong><br/>
+                        ${metric.label}: ${displayValue}<br/>
+                        <hr style="margin: 5px 0; border-color: rgba(255,255,255,0.2)">
+                        GPU Types: ${system.gpuTypes}<br/>
+                        Type: ${system.type}<br/>
+                        Access: ${system.accessType}<br/>
+                        Allocation: ${system.allocation}
+                    `);
+                })
+                .on('mouseout', function() {
+                    d3.select(this).attr('opacity', 0.85);
+                    hideTooltip();
+                });
+
+            // Value label
+            if (value > 0) {
+                barGroup.append('text')
+                    .attr('x', xScale(value) + 10)
+                    .attr('y', barY + barHeight / 2)
+                    .attr('dy', '0.35em')
+                    .attr('fill', colors.text)
+                    .attr('font-size', '12px')
+                    .attr('font-weight', 700)
+                    .text(metric.format(value));
+            }
+
+            // System label on the left side of bar
+            barGroup.append('text')
+                .attr('x', 8)
+                .attr('y', barY + barHeight / 2)
+                .attr('dy', '0.35em')
+                .attr('fill', '#ffffff')
+                .attr('font-size', '11px')
+                .attr('font-weight', 700)
+                .attr('text-shadow', '0 0 4px rgba(0,0,0,0.8)')
+                .text(system.shortName);
+        });
+    });
+
+    // Legend
+    const legendY = metrics.length * (barHeight * 3 + barSpacing * 2 + groupSpacing) + 20;
+    const legend = g.append('g')
+        .attr('transform', `translate(0, ${legendY})`);
+
+    legend.append('text')
+        .attr('x', 0)
+        .attr('y', -5)
+        .attr('fill', colors.text)
+        .attr('font-size', '13px')
+        .attr('font-weight', 700)
+        .text('Systems:');
+
+    const legendItems = [
+        { label: 'University of Arizona (Local HPC + CyVerse)', color: uaData.color, isUA: true },
+        { label: 'Jetstream2 (NSF Cloud @ IU + regional sites)', color: jetstream2Data.color, isUA: false },
+        { label: 'TACC (Frontera, Stampede3, Lonestar6, Vista)', color: taccData.color, isUA: false }
+    ];
+
+    legendItems.forEach((item, i) => {
+        const legendItem = legend.append('g')
+            .attr('transform', `translate(0, ${i * 22 + 10})`);
+
+        legendItem.append('rect')
+            .attr('width', 28)
+            .attr('height', 14)
+            .attr('fill', item.color)
+            .attr('opacity', 0.85)
+            .attr('stroke', item.isUA ? colors.gap : '#ffffff')
+            .attr('stroke-width', item.isUA ? 3 : 1)
+            .attr('rx', 4);
+
+        legendItem.append('text')
+            .attr('x', 35)
+            .attr('y', 7)
+            .attr('dy', '0.35em')
+            .attr('fill', colors.text)
+            .attr('font-size', '11px')
+            .attr('font-weight', item.isUA ? 700 : 600)
+            .text(item.label);
+    });
+
+    // Add comparative analysis
+    const analysisY = legendY + 90;
+    const analysis = g.append('g')
+        .attr('transform', `translate(0, ${analysisY})`);
+
+    const totalGPUs = uaData.gpus + jetstream2Data.gpus + taccData.gpus;
+    const totalTensor = uaData.fplopsTensor + jetstream2Data.fplopsTensor + taccData.fplopsTensor;
+    const totalH100H200 = uaData.h100Count + uaData.h200Count + jetstream2Data.h100Count + jetstream2Data.h200Count + taccData.h100Count + taccData.h200Count;
+
+    analysis.append('text')
+        .attr('x', 0)
+        .attr('y', 0)
+        .attr('fill', colors.text)
+        .attr('font-size', '12px')
+        .attr('font-weight', 700)
+        .text(`Combined ACCESS-CI Resources Available to UA Researchers:`);
+
+    analysis.append('text')
+        .attr('x', 0)
+        .attr('y', 22)
+        .attr('fill', '#059669')
+        .attr('font-size', '11px')
+        .attr('font-weight', 600)
+        .text(`✓ Total GPU Count: ${formatNumber(totalGPUs)} GPUs across all systems (${((jetstream2Data.gpus + taccData.gpus) / totalGPUs * 100).toFixed(0)}% from ACCESS-CI partners)`);
+
+    analysis.append('text')
+        .attr('x', 0)
+        .attr('y', 42)
+        .attr('fill', '#059669')
+        .attr('font-size', '11px')
+        .attr('font-weight', 600)
+        .text(`✓ Latest Generation GPUs: ${totalH100H200} H100/H200 GPUs available via ACCESS-CI (Jetstream2 NAIRR + TACC Vista/Stampede3)`);
+
+    analysis.append('text')
+        .attr('x', 0)
+        .attr('y', 62)
+        .attr('fill', '#059669')
+        .attr('font-size', '11px')
+        .attr('font-weight', 600)
+        .text(`✓ Combined AI Performance: ${totalTensor.toFixed(0)} PFLOPS Tensor/AI performance (${((jetstream2Data.fplopsTensor + taccData.fplopsTensor) / totalTensor * 100).toFixed(0)}% additional via ACCESS-CI)`);
+
+    analysis.append('text')
+        .attr('x', 0)
+        .attr('y', 87)
+        .attr('fill', colors.text)
+        .attr('font-size', '10px')
+        .attr('font-style', 'italic')
+        .attr('opacity', 0.8)
+        .text(`Note: ACCESS-CI resources complement UA's local HPC infrastructure. Jetstream2 excels at cloud-native workloads with flexible VM configurations.`);
+
+    analysis.append('text')
+        .attr('x', 0)
+        .attr('y', 102)
+        .attr('fill', colors.text)
+        .attr('font-size', '10px')
+        .attr('font-style', 'italic')
+        .attr('opacity', 0.8)
+        .text(`TACC systems provide leadership-scale computing with cutting-edge H200 GPUs (Vista) and diverse architectures. All accessible via ACCESS allocations.`);
 }
 
 // Initialize all enhanced visualizations
@@ -1469,8 +2250,9 @@ document.addEventListener('DOMContentLoaded', function() {
     createEnhancedTimelineVisualization();
     createPerformanceGapVisualization();
     createGPUComparisonVisualization();
-    createBubbleVisualization();
     createUAvsASUComparison();
+    createPeerUniversitiesComparison();
+    createACCESSCIComparison();
 });
 
 // Responsive resize
@@ -1481,7 +2263,8 @@ window.addEventListener('resize', function() {
         createEnhancedTimelineVisualization();
         createPerformanceGapVisualization();
         createGPUComparisonVisualization();
-        createBubbleVisualization();
         createUAvsASUComparison();
+        createPeerUniversitiesComparison();
+        createACCESSCIComparison();
     }, 250);
 });

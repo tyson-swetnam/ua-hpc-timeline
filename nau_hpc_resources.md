@@ -1,5 +1,25 @@
 # Northern Arizona University HPC Computing Resources
 
+## Documentation Sources
+
+**Primary Documentation:**
+- Advanced Research Computing (ARC) Main Page: https://in.nau.edu/arc/
+- ARC Overview: https://in.nau.edu/arc/overview/
+- Using the Monsoon Cluster - Introduction: https://in.nau.edu/arc/overview/using-the-cluster-introduction/
+- Monsoon Cluster Details: https://in.nau.edu/arc/details/
+- Monsoon Information Technology Services: https://in.nau.edu/its/monsoon/
+- Monsoon User Agreement: https://in.nau.edu/arc/overview/user-agreement/
+- Request Storage: https://in.nau.edu/arc/request-storage/
+
+**Training Materials:**
+- Intro to Monsoon and Slurm Workshop (PDF): https://rcdata.nau.edu/hpcpub/workshops/odintro.pdf
+- Pedagogic Modules - Monsoon Cluster: https://jan.ucc.nau.edu/mg2745/pedagogic_modules/courses/hpcdataintensive/slurm_1/
+
+**News:**
+- NAU Computing Cluster Launch Announcement: https://news.nau.edu/nau-computing-cluster-coming-online-workshop-april-29/
+
+---
+
 ## Main HPC System: Monsoon
 
 | Cluster | Total Nodes | Total CPU Cores | Total GPUs | Total System Memory |
