@@ -7,6 +7,7 @@ const colors = {
     ocelote: '#4ECDC4',
     puma: '#45B7D1',
     soteria: '#96CEB4',
+    hpcrefresh: '#FF9F43',
     industry: '#FFB800',
     warranty: '#4ADE80',
     aging: '#EF4444',
@@ -96,6 +97,20 @@ function createEnhancedTimelineVisualization() {
             gpuTFLOPS: 126,
             color: colors.soteria,
             description: 'HIPAA Compliant Secure Cluster'
+        },
+        {
+            name: 'HPC-Refresh',
+            startYear: 2026,
+            endYear: 2033,
+            warrantyEnd: 2031,
+            nodes: 44,
+            cores: 8256,
+            coresPerNode: 192,
+            memory: 35.3,
+            gpus: 16,
+            gpuTFLOPS: 15824,
+            color: colors.hpcrefresh,
+            description: 'AMD EPYC 9655/9455 + NVIDIA H200 NVL'
         }
     ];
 
@@ -404,6 +419,13 @@ function createPerformanceGapVisualization() {
             retireYear: 2030,
             cores: 94,
             color: colors.soteria
+        },
+        {
+            name: 'HPC-Refresh',
+            deployYear: 2026,
+            retireYear: 2033,
+            cores: 192,
+            color: colors.hpcrefresh
         }
     ];
 
@@ -729,6 +751,16 @@ function createGPUComparisonVisualization() {
             totalTFLOPS: 126,  // 8 * 15.7 = 125.6
             retireYear: 2030,
             color: colors.soteria
+        },
+        {
+            year: 2026,
+            system: 'HPC-Refresh',
+            model: 'H200 NVL',
+            count: 16,
+            tflopsPerGPU: 989,
+            totalTFLOPS: 15824,  // 16 * 989
+            retireYear: 2033,
+            color: colors.hpcrefresh
         }
     ];
 
@@ -1071,19 +1103,35 @@ function createUAvsASUComparison() {
         isUA: true
     };
 
+    const uaHPCRefresh = {
+        name: 'HPC-Refresh',
+        shortName: 'HPC-Refresh',
+        cpuCores: 8256,
+        gpus: 16,
+        gpuCores: 270336,  // 16 × 16,896 (H200)
+        memory: 35.3,  // TB
+        fplopsFP32: 15.824,  // PFLOPS
+        fplopsTensor: 31.664,  // PFLOPS
+        color: colors.hpcrefresh,
+        year: 2026,
+        warrantyEnd: 2031,
+        postWarranty: 0,
+        isUA: true
+    };
+
     // UA totals (for reference/fallback)
     const uaData = {
         name: 'University of Arizona',
         shortName: 'UA',
-        cpuCores: 43688,
-        gpus: 163,
-        gpuCores: 729600,
-        memory: 279.5,  // TB (23.5 + 83.3 + 169.7 + 3)
+        cpuCores: 51944,  // 43688 + 8256
+        gpus: 179,  // 163 + 16
+        gpuCores: 999936,  // 729600 + 270336
+        memory: 314.8,  // TB (23.5 + 83.3 + 169.7 + 3 + 35.3)
         storage: null,  // PB - not publicly documented
-        fplopsFP32: 2.078,  // PFLOPS
-        fplopsTensor: 10.51,  // PFLOPS
+        fplopsFP32: 17.902,  // PFLOPS (2.078 + 15.824)
+        fplopsTensor: 42.174,  // PFLOPS (10.51 + 31.664)
         color: '#0c5aa6',
-        systems: [uaPuma, uaOcelote, uaElGato, uaSoteria],
+        systems: [uaHPCRefresh, uaPuma, uaOcelote, uaElGato, uaSoteria],
         isUA: true
     };
 
@@ -1210,7 +1258,7 @@ function createUAvsASUComparison() {
     const barSpacing = 4;
     const groupSpacing = 25;
     const universities = [asuData, nauData];
-    const uaSystems = [uaPuma, uaOcelote, uaElGato, uaSoteria, cyverseData];
+    const uaSystems = [uaHPCRefresh, uaPuma, uaOcelote, uaElGato, uaSoteria, cyverseData];
 
     // Calculate combined UA totals (HPC + CyVerse)
     const uaCombinedData = {
@@ -1404,6 +1452,7 @@ function createUAvsASUComparison() {
         .text('UA Resources (stacked in first bar):');
 
     const legendItems = [
+        { label: 'HPC-Refresh (2026, in warranty)', color: colors.hpcrefresh, postWarranty: false },
         { label: 'Puma (2020, in warranty)', color: colors.puma, postWarranty: false },
         { label: 'Ocelote (2016, 4y post-warranty)', color: colors.ocelote, postWarranty: true },
         { label: 'El Gato (2013, 7y post-warranty)', color: colors.elgato, postWarranty: true },
@@ -1513,36 +1562,92 @@ function createUAvsASUComparison() {
 
 // 6. Peer Universities Comparison (UA vs CU Boulder vs Utah vs Texas A&M)
 function createPeerUniversitiesComparison() {
-    // UA HPC data
-    const uaHPCData = {
-        cpuCores: 43688,
-        gpus: 163,
-        memory: 279.5,
-        fplopsFP32: 2.078,
-        fplopsTensor: 10.51
+    // Individual UA systems for stacked bar
+    const uaHPCRefresh = {
+        shortName: 'HPC-Refresh',
+        cpuCores: 8256,
+        gpus: 16,
+        memory: 35.3,
+        storage: 0,
+        fplopsFP32: 15.824,
+        fplopsTensor: 31.664,
+        color: colors.hpcrefresh,
+        year: 2026
     };
 
-    // CyVerse data
-    const cyverseData = {
+    const uaPuma = {
+        shortName: 'Puma',
+        cpuCores: 29512,
+        gpus: 60,
+        memory: 169.7,
+        storage: 0,
+        fplopsFP32: 0.942,
+        fplopsTensor: 7.5,
+        color: colors.puma,
+        year: 2020
+    };
+
+    const uaOcelote = {
+        shortName: 'Ocelote',
+        cpuCores: 11724,
+        gpus: 95,
+        memory: 83.3,
+        storage: 0,
+        fplopsFP32: 1.01,
+        fplopsTensor: 2.01,
+        color: colors.ocelote,
+        year: 2016
+    };
+
+    const uaElGato = {
+        shortName: 'El Gato',
+        cpuCores: 1888,
+        gpus: 0,
+        memory: 23.5,
+        storage: 0,
+        fplopsFP32: 0,
+        fplopsTensor: 0,
+        color: colors.elgato,
+        year: 2013
+    };
+
+    const uaSoteria = {
+        shortName: 'Soteria',
+        cpuCores: 564,
+        gpus: 8,
+        memory: 3,
+        storage: 0,
+        fplopsFP32: 0.126,
+        fplopsTensor: 1.0,
+        color: colors.soteria,
+        year: 2023
+    };
+
+    const uaCyVerse = {
+        shortName: 'CyVerse',
         cpuCores: 4860,
         gpus: 59,
         memory: 30.25,
         storage: 10.7,
         fplopsFP32: 0.909,
-        fplopsTensor: 3.528
+        fplopsTensor: 3.528,
+        color: '#00B4D8',
+        year: 2023
     };
+
+    const uaSystems = [uaHPCRefresh, uaPuma, uaOcelote, uaElGato, uaSoteria, uaCyVerse];
 
     // Combined UA (HPC + CyVerse)
     const uaData = {
         name: 'University of Arizona',
         shortName: 'UA',
-        cpuCores: uaHPCData.cpuCores + cyverseData.cpuCores,  // 48,548
-        gpus: uaHPCData.gpus + cyverseData.gpus,  // 222
-        memory: uaHPCData.memory + cyverseData.memory,  // 309.75
-        storage: cyverseData.storage || 10.7,  // 10.7 PB
-        fplopsFP32: uaHPCData.fplopsFP32 + cyverseData.fplopsFP32,  // 2.987
-        fplopsTensor: uaHPCData.fplopsTensor + cyverseData.fplopsTensor,  // 14.038
-        primarySystem: 'Puma (2020) + CyVerse',
+        cpuCores: 56804,  // Sum of all systems
+        gpus: 238,
+        memory: 345.05,
+        storage: 10.7,
+        fplopsFP32: 18.811,
+        fplopsTensor: 45.702,
+        primarySystem: 'HPC-Refresh (2026) + Puma + CyVerse',
         color: '#0c5aa6'
     };
 
@@ -1589,8 +1694,8 @@ function createPeerUniversitiesComparison() {
     container.selectAll('*').remove();
 
     const width = container.node().getBoundingClientRect().width;
-    const height = 1100;  // Increased for storage metric
-    const margin = { top: 40, right: 40, bottom: 120, left: 140 };
+    const height = 1150;  // Increased for expanded legend
+    const margin = { top: 40, right: 40, bottom: 180, left: 140 };
     const innerWidth = width - margin.left - margin.right;
     const innerHeight = height - margin.top - margin.bottom;
 
@@ -1615,7 +1720,7 @@ function createPeerUniversitiesComparison() {
     const barHeight = 30;
     const barSpacing = 4;
     const groupSpacing = 25;
-    const universities = [uaData, cuBoulderData, utahData, texasAMData];
+    const otherUniversities = [cuBoulderData, utahData, texasAMData];
 
     // Y positions for each metric
     metrics.forEach((metric, i) => {
@@ -1642,13 +1747,88 @@ function createPeerUniversitiesComparison() {
             .attr('font-weight', 600)
             .text(metric.label);
 
-        // Draw bars for each university
-        universities.forEach((university, uniIndex) => {
-            const barY = yPos + (barHeight + barSpacing) * uniIndex;
+        // Draw UA stacked bar (first bar)
+        const uaBarY = yPos;
+        const uaBarGroup = g.append('g');
+
+        let xOffset = 0;
+        uaSystems.forEach((system) => {
+            const value = system[metric.key] || 0;
+            const barWidth = xScale(value);
+
+            if (value > 0) {
+                // Individual system segment
+                uaBarGroup.append('rect')
+                    .attr('x', xOffset)
+                    .attr('y', uaBarY)
+                    .attr('width', barWidth)
+                    .attr('height', barHeight)
+                    .attr('fill', system.color)
+                    .attr('opacity', 0.8)
+                    .attr('stroke', '#ffffff')
+                    .attr('stroke-width', 1)
+                    .on('mouseover', function(event) {
+                        d3.select(this).attr('opacity', 1);
+                        const displayValue = metric.format(value);
+                        const percentage = ((value / (uaData[metric.key] || 1)) * 100).toFixed(1);
+                        showTooltip(event, `
+                            <strong>${system.shortName} (UA) ${metric.label}</strong><br/>
+                            ${displayValue} (${percentage}% of UA total)<br/>
+                            Year: ${system.year}
+                        `);
+                    })
+                    .on('mouseout', function() {
+                        d3.select(this).attr('opacity', 0.8);
+                        hideTooltip();
+                    });
+
+                // Add system label if segment is wide enough
+                if (barWidth > 50) {
+                    uaBarGroup.append('text')
+                        .attr('x', xOffset + barWidth / 2)
+                        .attr('y', uaBarY + barHeight / 2)
+                        .attr('dy', '0.35em')
+                        .attr('text-anchor', 'middle')
+                        .attr('fill', '#ffffff')
+                        .attr('font-size', '8px')
+                        .attr('font-weight', 700)
+                        .text(system.shortName);
+                }
+
+                xOffset += barWidth;
+            }
+        });
+
+        // UA total label at the end
+        const uaTotal = uaData[metric.key] || 0;
+        if (uaTotal > 0) {
+            uaBarGroup.append('text')
+                .attr('x', xOffset + 8)
+                .attr('y', uaBarY + barHeight / 2)
+                .attr('dy', '0.35em')
+                .attr('fill', colors.text)
+                .attr('font-size', '11px')
+                .attr('font-weight', 600)
+                .text(metric.format(uaTotal));
+        }
+
+        // UA label on the left
+        uaBarGroup.append('text')
+            .attr('x', 5)
+            .attr('y', uaBarY + barHeight / 2)
+            .attr('dy', '0.35em')
+            .attr('fill', '#ffffff')
+            .attr('font-size', '10px')
+            .attr('font-weight', 700)
+            .attr('text-shadow', '0 0 3px rgba(0,0,0,0.5)')
+            .text('UA');
+
+        // Draw bars for other universities
+        otherUniversities.forEach((university, uniIndex) => {
+            const barY = yPos + (barHeight + barSpacing) * (uniIndex + 1);
             const barGroup = g.append('g');
 
             const value = university[metric.key] || 0;
-            const isUA = university.shortName === 'UA';
 
             // Bar
             barGroup.append('rect')
@@ -1659,8 +1839,6 @@ function createPeerUniversitiesComparison() {
                 .attr('fill', university.color)
                 .attr('opacity', 0.8)
                 .attr('rx', 4)
-                .attr('stroke', isUA ? colors.gap : 'none')
-                .attr('stroke-width', isUA ? 2 : 0)
                 .on('mouseover', function(event) {
                     d3.select(this).attr('opacity', 1);
                     const displayValue = value > 0 ? metric.format(value) : 'N/A';
@@ -1704,38 +1882,84 @@ function createPeerUniversitiesComparison() {
     const legend = g.append('g')
         .attr('transform', `translate(0, ${legendY})`);
 
-    const legendItems = [
-        { label: 'University of Arizona', color: uaData.color, isUA: true },
-        { label: 'CU Boulder', color: cuBoulderData.color, isUA: false },
-        { label: 'University of Utah', color: utahData.color, isUA: false },
-        { label: 'Texas A&M University', color: texasAMData.color, isUA: false }
+    // UA systems legend
+    legend.append('text')
+        .attr('x', 0)
+        .attr('y', -10)
+        .attr('fill', colors.text)
+        .attr('font-size', '12px')
+        .attr('font-weight', 700)
+        .text('UA Resources (stacked in first bar):');
+
+    const uaLegendItems = [
+        { label: 'HPC-Refresh (2026)', color: colors.hpcrefresh },
+        { label: 'Puma (2020)', color: colors.puma },
+        { label: 'Ocelote (2016)', color: colors.ocelote },
+        { label: 'El Gato (2013)', color: colors.elgato },
+        { label: 'Soteria (2023)', color: colors.soteria },
+        { label: 'CyVerse', color: '#00B4D8' }
     ];
 
-    legendItems.forEach((item, i) => {
+    uaLegendItems.forEach((item, i) => {
         const legendItem = legend.append('g')
-            .attr('transform', `translate(${i * 200}, ${Math.floor(i / 2) * 20})`);
+            .attr('transform', `translate(${(i % 3) * 200}, ${Math.floor(i / 3) * 20 + 10})`);
 
         legendItem.append('rect')
-            .attr('width', 25)
+            .attr('width', 20)
             .attr('height', 12)
             .attr('fill', item.color)
             .attr('opacity', 0.8)
-            .attr('stroke', item.isUA ? colors.gap : 'none')
-            .attr('stroke-width', item.isUA ? 2 : 0)
             .attr('rx', 3);
 
         legendItem.append('text')
-            .attr('x', 30)
+            .attr('x', 25)
             .attr('y', 6)
             .attr('dy', '0.35em')
             .attr('fill', colors.text)
             .attr('font-size', '10px')
-            .attr('font-weight', item.isUA ? 700 : 600)
+            .attr('font-weight', 600)
+            .text(item.label);
+    });
+
+    // Peer universities legend
+    const peerLegendY = 65;
+    legend.append('text')
+        .attr('x', 0)
+        .attr('y', peerLegendY - 10)
+        .attr('fill', colors.text)
+        .attr('font-size', '12px')
+        .attr('font-weight', 700)
+        .text('Peer Universities:');
+
+    const peerLegendItems = [
+        { label: 'CU Boulder', color: cuBoulderData.color },
+        { label: 'University of Utah', color: utahData.color },
+        { label: 'Texas A&M', color: texasAMData.color }
+    ];
+
+    peerLegendItems.forEach((item, i) => {
+        const legendItem = legend.append('g')
+            .attr('transform', `translate(${i * 200}, ${peerLegendY})`);
+
+        legendItem.append('rect')
+            .attr('width', 20)
+            .attr('height', 12)
+            .attr('fill', item.color)
+            .attr('opacity', 0.8)
+            .attr('rx', 3);
+
+        legendItem.append('text')
+            .attr('x', 25)
+            .attr('y', 6)
+            .attr('dy', '0.35em')
+            .attr('fill', colors.text)
+            .attr('font-size', '10px')
+            .attr('font-weight', 600)
             .text(item.label);
     });
 
     // Add comparative analysis
-    const analysisY = legendY + 50;
+    const analysisY = legendY + 100;
     const analysis = g.append('g')
         .attr('transform', `translate(0, ${analysisY})`);
 
@@ -1766,16 +1990,79 @@ function createPeerUniversitiesComparison() {
 
 // 7. UA vs ACCESS-CI (Jetstream2 & TACC) GPU/AI Resources Comparison
 function createACCESSCIComparison() {
-    // UA Total GPU resources (HPC + CyVerse)
+    // Individual UA systems for stacked bar (GPU-focused metrics)
+    const uaHPCRefresh = {
+        shortName: 'HPC-Refresh',
+        gpus: 16,
+        h100Count: 0,
+        h200Count: 16,
+        a100Count: 0,
+        fplopsFP32: 15.824,
+        fplopsTensor: 31.664,
+        color: colors.hpcrefresh,
+        year: 2026
+    };
+
+    const uaPuma = {
+        shortName: 'Puma',
+        gpus: 60,
+        h100Count: 0,
+        h200Count: 0,
+        a100Count: 12,  // MIG slices
+        fplopsFP32: 0.942,
+        fplopsTensor: 7.5,
+        color: colors.puma,
+        year: 2020
+    };
+
+    const uaOcelote = {
+        shortName: 'Ocelote',
+        gpus: 95,
+        h100Count: 0,
+        h200Count: 0,
+        a100Count: 0,
+        fplopsFP32: 1.01,
+        fplopsTensor: 2.01,
+        color: colors.ocelote,
+        year: 2016
+    };
+
+    const uaSoteria = {
+        shortName: 'Soteria',
+        gpus: 8,
+        h100Count: 0,
+        h200Count: 0,
+        a100Count: 0,
+        fplopsFP32: 0.126,
+        fplopsTensor: 1.0,
+        color: colors.soteria,
+        year: 2023
+    };
+
+    const uaCyVerse = {
+        shortName: 'CyVerse',
+        gpus: 59,
+        h100Count: 0,
+        h200Count: 0,
+        a100Count: 4,  // A100 80GB
+        fplopsFP32: 0.909,
+        fplopsTensor: 3.528,
+        color: '#00B4D8',
+        year: 2023
+    };
+
+    const uaSystems = [uaHPCRefresh, uaPuma, uaOcelote, uaSoteria, uaCyVerse];
+
+    // UA Total GPU resources (HPC + CyVerse + HPC-Refresh)
     const uaData = {
         name: 'University of Arizona',
         shortName: 'UA Total',
-        gpus: 222,  // 163 HPC + 59 CyVerse
-        gpuTypes: 'P100, V100, V100S, A100 MIG, GTX 1080 Ti, RTX 2080, T4, A100, A16, L40s',
-        fplopsFP32: 2.987,  // 2.078 HPC + 0.909 CyVerse
-        fplopsTensor: 14.038,  // 10.51 HPC + 3.528 CyVerse
+        gpus: 238,  // 179 HPC (incl HPC-Refresh) + 59 CyVerse
+        gpuTypes: 'H200 NVL, P100, V100, V100S, A100 MIG, GTX 1080 Ti, RTX 2080, T4, A100, A16, L40s',
+        fplopsFP32: 18.811,  // 17.902 HPC + 0.909 CyVerse
+        fplopsTensor: 45.702,  // 42.174 HPC + 3.528 CyVerse
         h100Count: 0,
-        h200Count: 0,
+        h200Count: 16,  // HPC-Refresh H200 NVL
         a100Count: 16,  // 12 MIG slices + 4 CyVerse A100 80GB
         color: '#0c5aa6',
         type: 'Local HPC',
@@ -1821,8 +2108,8 @@ function createACCESSCIComparison() {
     container.selectAll('*').remove();
 
     const width = container.node().getBoundingClientRect().width;
-    const height = 900;
-    const margin = { top: 40, right: 40, bottom: 200, left: 180 };
+    const height = 950;  // Increased for expanded legend
+    const margin = { top: 40, right: 40, bottom: 250, left: 180 };
     const innerWidth = width - margin.left - margin.right;
     const innerHeight = height - margin.top - margin.bottom;
 
@@ -1847,7 +2134,7 @@ function createACCESSCIComparison() {
     const barHeight = 35;
     const barSpacing = 5;
     const groupSpacing = 30;
-    const systems = [uaData, jetstream2Data, taccData];
+    const otherSystems = [jetstream2Data, taccData];
 
     // Y positions for each metric
     metrics.forEach((metric, i) => {
@@ -1873,13 +2160,88 @@ function createACCESSCIComparison() {
             .attr('font-weight', 700)
             .text(metric.label);
 
-        // Draw bars for each system
-        systems.forEach((system, sysIndex) => {
-            const barY = yPos + (barHeight + barSpacing) * sysIndex;
+        // Draw UA stacked bar (first bar)
+        const uaBarY = yPos;
+        const uaBarGroup = g.append('g');
+
+        let xOffset = 0;
+        uaSystems.forEach((system) => {
+            const value = system[metric.key] || 0;
+            const barWidth = xScale(value);
+
+            if (value > 0) {
+                // Individual system segment
+                uaBarGroup.append('rect')
+                    .attr('x', xOffset)
+                    .attr('y', uaBarY)
+                    .attr('width', barWidth)
+                    .attr('height', barHeight)
+                    .attr('fill', system.color)
+                    .attr('opacity', 0.85)
+                    .attr('stroke', '#ffffff')
+                    .attr('stroke-width', 1)
+                    .on('mouseover', function(event) {
+                        d3.select(this).attr('opacity', 1);
+                        const displayValue = metric.format(value);
+                        const percentage = ((value / (uaData[metric.key] || 1)) * 100).toFixed(1);
+                        showTooltip(event, `
+                            <strong>${system.shortName} (UA) ${metric.label}</strong><br/>
+                            ${displayValue} (${percentage}% of UA total)<br/>
+                            Year: ${system.year}
+                        `);
+                    })
+                    .on('mouseout', function() {
+                        d3.select(this).attr('opacity', 0.85);
+                        hideTooltip();
+                    });
+
+                // Add system label if segment is wide enough
+                if (barWidth > 45) {
+                    uaBarGroup.append('text')
+                        .attr('x', xOffset + barWidth / 2)
+                        .attr('y', uaBarY + barHeight / 2)
+                        .attr('dy', '0.35em')
+                        .attr('text-anchor', 'middle')
+                        .attr('fill', '#ffffff')
+                        .attr('font-size', '9px')
+                        .attr('font-weight', 700)
+                        .text(system.shortName);
+                }
+
+                xOffset += barWidth;
+            }
+        });
+
+        // UA total label at the end
+        const uaTotal = uaData[metric.key] || 0;
+        if (uaTotal > 0) {
+            uaBarGroup.append('text')
+                .attr('x', xOffset + 10)
+                .attr('y', uaBarY + barHeight / 2)
+                .attr('dy', '0.35em')
+                .attr('fill', colors.text)
+                .attr('font-size', '12px')
+                .attr('font-weight', 700)
+                .text(metric.format(uaTotal));
+        }
+
+        // UA label on the left
+        uaBarGroup.append('text')
+            .attr('x', 8)
+            .attr('y', uaBarY + barHeight / 2)
+            .attr('dy', '0.35em')
+            .attr('fill', '#ffffff')
+            .attr('font-size', '11px')
+            .attr('font-weight', 700)
+            .attr('text-shadow', '0 0 4px rgba(0,0,0,0.8)')
+            .text('UA');
+
+        // Draw bars for other systems (Jetstream2, TACC)
+        otherSystems.forEach((system, sysIndex) => {
+            const barY = yPos + (barHeight + barSpacing) * (sysIndex + 1);
             const barGroup = g.append('g');
 
             const value = system[metric.key] || 0;
-            const isUA = system.shortName === 'UA Total';
 
             // Bar
             barGroup.append('rect')
@@ -1890,8 +2252,6 @@ function createACCESSCIComparison() {
                 .attr('fill', system.color)
                 .attr('opacity', 0.85)
                 .attr('rx', 5)
-                .attr('stroke', isUA ? colors.gap : '#ffffff')
-                .attr('stroke-width', isUA ? 3 : 1)
                 .on('mouseover', function(event) {
                     d3.select(this).attr('opacity', 1);
                     const displayValue = value > 0 ? metric.format(value) : 'N/A';
@@ -1940,45 +2300,82 @@ function createACCESSCIComparison() {
     const legend = g.append('g')
         .attr('transform', `translate(0, ${legendY})`);
 
+    // UA systems legend
     legend.append('text')
         .attr('x', 0)
         .attr('y', -5)
         .attr('fill', colors.text)
-        .attr('font-size', '13px')
+        .attr('font-size', '12px')
         .attr('font-weight', 700)
-        .text('Systems:');
+        .text('UA Resources (stacked in first bar):');
 
-    const legendItems = [
-        { label: 'University of Arizona (Local HPC + CyVerse)', color: uaData.color, isUA: true },
-        { label: 'Jetstream2 (NSF Cloud @ IU + regional sites)', color: jetstream2Data.color, isUA: false },
-        { label: 'TACC (Frontera, Stampede3, Lonestar6, Vista)', color: taccData.color, isUA: false }
+    const uaLegendItems = [
+        { label: 'HPC-Refresh (2026)', color: colors.hpcrefresh },
+        { label: 'Puma (2020)', color: colors.puma },
+        { label: 'Ocelote (2016)', color: colors.ocelote },
+        { label: 'Soteria (2023)', color: colors.soteria },
+        { label: 'CyVerse', color: '#00B4D8' }
     ];
 
-    legendItems.forEach((item, i) => {
+    uaLegendItems.forEach((item, i) => {
         const legendItem = legend.append('g')
-            .attr('transform', `translate(0, ${i * 22 + 10})`);
+            .attr('transform', `translate(${(i % 3) * 180}, ${Math.floor(i / 3) * 20 + 10})`);
 
         legendItem.append('rect')
-            .attr('width', 28)
-            .attr('height', 14)
+            .attr('width', 20)
+            .attr('height', 12)
             .attr('fill', item.color)
             .attr('opacity', 0.85)
-            .attr('stroke', item.isUA ? colors.gap : '#ffffff')
-            .attr('stroke-width', item.isUA ? 3 : 1)
-            .attr('rx', 4);
+            .attr('rx', 3);
 
         legendItem.append('text')
-            .attr('x', 35)
-            .attr('y', 7)
+            .attr('x', 25)
+            .attr('y', 6)
             .attr('dy', '0.35em')
             .attr('fill', colors.text)
-            .attr('font-size', '11px')
-            .attr('font-weight', item.isUA ? 700 : 600)
+            .attr('font-size', '10px')
+            .attr('font-weight', 600)
+            .text(item.label);
+    });
+
+    // ACCESS-CI systems legend
+    const accessLegendY = 60;
+    legend.append('text')
+        .attr('x', 0)
+        .attr('y', accessLegendY - 5)
+        .attr('fill', colors.text)
+        .attr('font-size', '12px')
+        .attr('font-weight', 700)
+        .text('ACCESS-CI Partners:');
+
+    const accessLegendItems = [
+        { label: 'Jetstream2 (NSF Cloud)', color: jetstream2Data.color },
+        { label: 'TACC (Vista, Stampede3, etc.)', color: taccData.color }
+    ];
+
+    accessLegendItems.forEach((item, i) => {
+        const legendItem = legend.append('g')
+            .attr('transform', `translate(${i * 250}, ${accessLegendY + 10})`);
+
+        legendItem.append('rect')
+            .attr('width', 20)
+            .attr('height', 12)
+            .attr('fill', item.color)
+            .attr('opacity', 0.85)
+            .attr('rx', 3);
+
+        legendItem.append('text')
+            .attr('x', 25)
+            .attr('y', 6)
+            .attr('dy', '0.35em')
+            .attr('fill', colors.text)
+            .attr('font-size', '10px')
+            .attr('font-weight', 600)
             .text(item.label);
     });
 
     // Add comparative analysis
-    const analysisY = legendY + 90;
+    const analysisY = legendY + 100;
     const analysis = g.append('g')
         .attr('transform', `translate(0, ${analysisY})`);
 

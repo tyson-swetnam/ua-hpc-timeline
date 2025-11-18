@@ -7,6 +7,7 @@ const colors = {
     ocelote: '#4ECDC4',
     puma: '#45B7D1',
     soteria: '#96CEB4',
+    hpcrefresh: '#FF9F43',
     industry: '#FFE66D',
     gpu: '#A8E6CF',
     text: '#E3F2FD',
@@ -83,6 +84,17 @@ function createTimelineVisualization() {
             gpus: 8,
             color: colors.soteria,
             description: 'HIPAA Compliant Secure Cluster'
+        },
+        {
+            name: 'HPC-Refresh',
+            startYear: 2026,
+            endYear: 2033,
+            nodes: 44,
+            cores: 8256,
+            memory: 35.3,
+            gpus: 16,
+            color: colors.hpcrefresh,
+            description: 'AMD EPYC 9655/9455 + NVIDIA H200 NVL'
         }
     ];
 
@@ -243,7 +255,8 @@ function createPerformanceVisualization() {
     const uaData = [
         { year: 2013, system: 'El Gato', cores: 16, color: colors.elgato },
         { year: 2016, system: 'Ocelote', cores: 28, color: colors.ocelote },
-        { year: 2020, system: 'Puma', cores: 94, color: colors.puma }
+        { year: 2020, system: 'Puma', cores: 94, color: colors.puma },
+        { year: 2026, system: 'HPC-Refresh', cores: 192, color: colors.hpcrefresh }
     ];
 
     const container = d3.select('#performance-viz');
@@ -263,7 +276,7 @@ function createPerformanceVisualization() {
 
     // Scales
     const xScale = d3.scaleLinear()
-        .domain([2010, 2024])
+        .domain([2010, 2027])
         .range([0, innerWidth]);
 
     const yScale = d3.scaleLog()
@@ -403,7 +416,8 @@ function createGPUEvolutionVisualization() {
     const gpuData = [
         { year: 2016, system: 'Ocelote', model: 'P100', count: 95, fp32: 10.6, totalTFLOPS: 1007, color: colors.ocelote },
         { year: 2020, system: 'Puma', model: 'V100S/A100', count: 60, fp32: 17.6, totalTFLOPS: 942, color: colors.puma },
-        { year: 2023, system: 'Soteria', model: 'V100', count: 8, fp32: 15.7, totalTFLOPS: 126, color: colors.soteria }
+        { year: 2023, system: 'Soteria', model: 'V100', count: 8, fp32: 15.7, totalTFLOPS: 126, color: colors.soteria },
+        { year: 2026, system: 'HPC-Refresh', model: 'H200 NVL', count: 16, fp32: 989, totalTFLOPS: 15824, color: colors.hpcrefresh }
     ];
 
     const container = d3.select('#gpu-evolution-viz');
@@ -423,11 +437,11 @@ function createGPUEvolutionVisualization() {
 
     // Scales
     const xScale = d3.scaleLinear()
-        .domain([2015, 2025])
+        .domain([2015, 2027])
         .range([0, innerWidth]);
 
     const yScale = d3.scaleLinear()
-        .domain([0, 1200])
+        .domain([0, 17000])
         .range([innerHeight, 0]);
 
     const radiusScale = d3.scaleSqrt()
@@ -612,6 +626,16 @@ function createBubbleVisualization() {
             color: colors.soteria,
             x: 0.3,
             y: 0.2
+        },
+        {
+            name: 'HPC-Refresh',
+            cores: 8256,
+            memory: 35.3,
+            nodes: 44,
+            gpus: 16,
+            color: colors.hpcrefresh,
+            x: 0.4,
+            y: 0.4
         }
     ];
 
