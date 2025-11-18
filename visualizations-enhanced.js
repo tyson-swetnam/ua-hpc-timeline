@@ -108,7 +108,7 @@ function createEnhancedTimelineVisualization() {
             coresPerNode: 192,
             memory: 35.3,
             gpus: 16,
-            gpuTFLOPS: 15824,
+            gpuTFLOPS: 1072,  // 16 × 67 TFLOPS (H200 FP32)
             color: colors.hpcrefresh,
             description: 'AMD EPYC 9655/9455 + NVIDIA H200 NVL'
         }
@@ -757,8 +757,8 @@ function createGPUComparisonVisualization() {
             system: 'HPC-Refresh',
             model: 'H200 NVL',
             count: 16,
-            tflopsPerGPU: 989,
-            totalTFLOPS: 15824,  // 16 * 989
+            tflopsPerGPU: 67,  // H200 FP32 performance
+            totalTFLOPS: 1072,  // 16 × 67
             retireYear: 2033,
             color: colors.hpcrefresh
         }
@@ -1110,7 +1110,7 @@ function createUAvsASUComparison() {
         gpus: 16,
         gpuCores: 270336,  // 16 × 16,896 (H200)
         memory: 35.3,  // TB
-        fplopsFP32: 15.824,  // PFLOPS
+        fplopsFP32: 1.072,  // PFLOPS (16 × 67 TFLOPS)
         fplopsTensor: 31.664,  // PFLOPS
         color: colors.hpcrefresh,
         year: 2026,
@@ -1128,7 +1128,7 @@ function createUAvsASUComparison() {
         gpuCores: 999936,  // 729600 + 270336
         memory: 314.8,  // TB (23.5 + 83.3 + 169.7 + 3 + 35.3)
         storage: null,  // PB - not publicly documented
-        fplopsFP32: 17.902,  // PFLOPS (2.078 + 15.824)
+        fplopsFP32: 3.150,  // PFLOPS (2.078 + 1.072)
         fplopsTensor: 42.174,  // PFLOPS (10.51 + 31.664)
         color: '#0c5aa6',
         systems: [uaHPCRefresh, uaPuma, uaOcelote, uaElGato, uaSoteria],
@@ -1569,7 +1569,7 @@ function createPeerUniversitiesComparison() {
         gpus: 16,
         memory: 35.3,
         storage: 0,
-        fplopsFP32: 15.824,
+        fplopsFP32: 1.072,  // 16 × 67 TFLOPS
         fplopsTensor: 31.664,
         color: colors.hpcrefresh,
         year: 2026
@@ -1645,7 +1645,7 @@ function createPeerUniversitiesComparison() {
         gpus: 238,
         memory: 345.05,
         storage: 10.7,
-        fplopsFP32: 18.811,
+        fplopsFP32: 4.059,  // 3.150 HPC + 0.909 CyVerse
         fplopsTensor: 45.702,
         primarySystem: 'HPC-Refresh (2026) + Puma + CyVerse',
         color: '#0c5aa6'
@@ -1997,7 +1997,7 @@ function createACCESSCIComparison() {
         h100Count: 0,
         h200Count: 16,
         a100Count: 0,
-        fplopsFP32: 15.824,
+        fplopsFP32: 1.072,  // 16 × 67 TFLOPS
         fplopsTensor: 31.664,
         color: colors.hpcrefresh,
         year: 2026
@@ -2059,7 +2059,7 @@ function createACCESSCIComparison() {
         shortName: 'UA Total',
         gpus: 238,  // 179 HPC (incl HPC-Refresh) + 59 CyVerse
         gpuTypes: 'H200 NVL, P100, V100, V100S, A100 MIG, GTX 1080 Ti, RTX 2080, T4, A100, A16, L40s',
-        fplopsFP32: 18.811,  // 17.902 HPC + 0.909 CyVerse
+        fplopsFP32: 4.059,  // 3.150 HPC + 0.909 CyVerse
         fplopsTensor: 45.702,  // 42.174 HPC + 3.528 CyVerse
         h100Count: 0,
         h200Count: 16,  // HPC-Refresh H200 NVL

@@ -417,7 +417,7 @@ function createGPUEvolutionVisualization() {
         { year: 2016, system: 'Ocelote', model: 'P100', count: 95, fp32: 10.6, totalTFLOPS: 1007, color: colors.ocelote },
         { year: 2020, system: 'Puma', model: 'V100S/A100', count: 60, fp32: 17.6, totalTFLOPS: 942, color: colors.puma },
         { year: 2023, system: 'Soteria', model: 'V100', count: 8, fp32: 15.7, totalTFLOPS: 126, color: colors.soteria },
-        { year: 2026, system: 'HPC-Refresh', model: 'H200 NVL', count: 16, fp32: 989, totalTFLOPS: 15824, color: colors.hpcrefresh }
+        { year: 2026, system: 'HPC-Refresh', model: 'H200 NVL', count: 16, fp32: 67, totalTFLOPS: 1072, color: colors.hpcrefresh }
     ];
 
     const container = d3.select('#gpu-evolution-viz');
